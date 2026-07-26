@@ -165,7 +165,8 @@ class Ajax extends Admin_Controller
                         ],
                     ];
 
-                    $this->json_encode_ajax($response);
+                    echo json_encode($response);
+                    exit;
                 }
             }
 
@@ -187,7 +188,8 @@ class Ajax extends Admin_Controller
                         ],
                     ];
 
-                    $this->json_encode_ajax($response);
+                    echo json_encode($response);
+                    exit;
                 }
             }
 
@@ -292,14 +294,16 @@ class Ajax extends Admin_Controller
                     'validation_errors' => $result,
                 ];
 
-                $this->json_encode_ajax($response);
+                echo json_encode($response);
+                exit;
             }
 
             $debug_write('save:custom-done');
         }
 
         $debug_write('save:json-response');
-        $this->json_encode_ajax($response);
+        echo json_encode($response);
+        exit;
     }
 
     public function save_invoice_tax_rate()
