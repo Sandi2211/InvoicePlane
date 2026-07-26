@@ -20,7 +20,7 @@ class Ajax extends Admin_Controller
 
     public function save()
     {
-        $debug_trace_file = APPPATH . '../tmp/ip-invoice-save-debug.log';
+        $debug_trace_file = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ip-invoice-save-debug.log';
         $debug_write = static function (string $message) use ($debug_trace_file): void {
             @file_put_contents(
                 $debug_trace_file,
