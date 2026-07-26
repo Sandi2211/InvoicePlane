@@ -103,7 +103,8 @@ class Ajax extends Admin_Controller
                         ],
                     ];
 
-                    $this->json_encode_ajax($response);
+                    echo json_encode($response);
+                    exit;
                 }
             }
 
@@ -183,11 +184,13 @@ class Ajax extends Admin_Controller
                     'validation_errors' => $result,
                 ];
 
-                $this->json_encode_ajax($response);
+                echo json_encode($response);
+                exit;
             }
         }
 
-        $this->json_encode_ajax($response);
+        echo json_encode($response);
+        exit;
     }
 
     public function save_quote_tax_rate()
