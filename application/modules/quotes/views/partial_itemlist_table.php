@@ -108,7 +108,6 @@ if ($legacy_calculation) {
                     </select>
                 </div>
             </td>
-            <td class="td-amount td-vert-middle"></td>
             <td class="td-amount td-vert-middle">
                 <span><?php _trans('subtotal'); ?></span><br/>
                 <span name="subtotal" class="amount"></span>
@@ -245,7 +244,6 @@ foreach ($items as $item) {
                         </select>
                     </div>
                 </td>
-                <td class="td-amount td-vert-middle"></td>
                 <td class="td-amount td-vert-middle">
                     <span><?php _trans('subtotal'); ?></span><br/>
                     <span name="subtotal" class="amount">

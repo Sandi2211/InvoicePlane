@@ -139,7 +139,6 @@ if ($invoice->sumex_id == '') {
                     </select>
                 </div>
             </td>
-            <td class="td-amount td-vert-middle"></td>
             <td class="td-amount td-vert-middle">
                 <span><?php _trans('subtotal'); ?></span><br/>
                 <span name="subtotal" class="amount"></span>
@@ -300,7 +299,6 @@ foreach ($items as $item) {
                     </td>
 <?php
         }
-    ?>
 
                 <td class="td-amount">
                     <div class="input-group">
