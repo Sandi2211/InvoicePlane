@@ -20,50 +20,6 @@ class Ajax extends Admin_Controller
 
     public function save()
     {
-        $debug_trace_file = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ip-invoice-save-debug.log';
-        $debug_write = static function (string $message) use ($debug_trace_file): void {
-            @file_put_contents(
-                $debug_trace_file,
-                '[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL,
-                FILE_APPEND
-            );
-        };
-
-        $debug_write('save:start');
-
-        register_shutdown_function(function () use ($debug_write) {
-            $error = error_get_last();
-
-            if ($error === null) {
-                return;
-            }
-
-            $fatal_types = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR];
-
-            if ( ! in_array($error['type'], $fatal_types, true)) {
-                return;
-            }
-
-            $debug_write(
-                'save:fatal type=' . ($error['type'] ?? 'n/a')
-                . '; message=' . ($error['message'] ?? 'n/a')
-                . '; file=' . ($error['file'] ?? 'n/a')
-                . '; line=' . ($error['line'] ?? 'n/a')
-            );
-
-            if ( ! headers_sent()) {
-                http_response_code(500);
-                header('Content-Type: application/json; charset=UTF-8');
-            }
-
-            echo json_encode([
-                'fatal_type'    => $error['type'] ?? null,
-                'fatal_message' => $error['message'] ?? null,
-                'fatal_file'    => $error['file'] ?? null,
-                'fatal_line'    => $error['line'] ?? null,
-            ]);
-        });
-
         $this->load->model([
             'invoices/mdl_items',
             'invoices/mdl_invoices',
@@ -71,15 +27,11 @@ class Ajax extends Admin_Controller
             'invoices/mdl_invoice_sumex',
         ]);
 
-        $debug_write('save:models-loaded');
-
         $invoice_id = $this->security->xss_clean($this->input->post('invoice_id', true));
 
         $this->mdl_invoices->set_id($invoice_id);
-        $debug_write('save:invoice-set-id');
 
         if ($this->mdl_invoices->run_validation('validation_rules_save_invoice')) {
-            $debug_write('save:validation-passed');
             $items = json_decode($this->input->post('items'));
 
             $invoice_discount_percent = (float) $this->input->post('invoice_discount_percent');
@@ -170,8 +122,6 @@ class Ajax extends Admin_Controller
                 }
             }
 
-            $debug_write('save:items-saved');
-
             $invoice_status_id = $this->input->post('invoice_status_id');
 
             // Read invoice number from input
@@ -222,7 +172,6 @@ class Ajax extends Admin_Controller
             }
 
             $this->mdl_invoices->save($invoice_id, $db_array);
-            $debug_write('save:invoice-saved');
 
             $sumexInvoice = $this->mdl_invoices->where('sumex_invoice', $invoice_id)->get()->num_rows();
 
@@ -241,8 +190,6 @@ class Ajax extends Admin_Controller
                 $this->mdl_invoice_sumex->save($invoice_id, $sumex_array);
             }
 
-            $debug_write('save:sumex-processed');
-
             if (config_item('legacy_calculation')) {
                 // Recalculate for discounts
                 $this->load->model('invoices/mdl_invoice_amounts');
@@ -252,10 +199,8 @@ class Ajax extends Admin_Controller
             $response = [
                 'success' => 1,
             ];
-            $debug_write('save:response-success-set');
         } else {
             log_message('error', '980: I wasnt able to run the validation validation_rules_save_invoice');
-            $debug_write('save:validation-failed');
 
             $this->load->helper('json_error');
             $response = [
@@ -266,7 +211,6 @@ class Ajax extends Admin_Controller
 
         // Save all custom fields
         if ($this->input->post('custom')) {
-            $debug_write('save:custom-start');
             $db_array = [];
 
             $values = [];
@@ -288,7 +232,6 @@ class Ajax extends Admin_Controller
             $this->load->model('custom_fields/mdl_invoice_custom');
             $result = $this->mdl_invoice_custom->save_custom($invoice_id, $db_array);
             if ($result !== true) {
-                $debug_write('save:custom-failed');
                 $response = [
                     'success'           => 0,
                     'validation_errors' => $result,
@@ -297,11 +240,8 @@ class Ajax extends Admin_Controller
                 echo json_encode($response);
                 exit;
             }
-
-            $debug_write('save:custom-done');
         }
 
-        $debug_write('save:json-response');
         echo json_encode($response);
         exit;
     }
