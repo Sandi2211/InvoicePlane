@@ -50,6 +50,13 @@
                     <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                 </div>
             </td>
+            <td class="td-amount">
+                <div class="input-group">
+                    <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
+                    <input type="text" name="item_price_gross" class="form-control amount" value="">
+                    <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                </div>
+            </td>
 <?php
 if ( ! $legacy_calculation) {
     $this->layout->load_view('layout/partial/itemlist_table_item_discount_input');
@@ -74,13 +81,6 @@ if ($legacy_calculation) {
     $this->layout->load_view('layout/partial/itemlist_table_item_discount_input');
 }
             ?>
-            <td class="td-amount">
-                <div class="input-group">
-                    <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
-                    <input type="text" name="item_price_gross" class="form-control amount" value="">
-                    <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
-                </div>
-            </td>
             <td class="td-icon text-right td-vert-middle">
                 <button type="button" class="btn_delete_item btn btn-link btn-sm" title="<?php _trans('delete'); ?>">
                     <i class="fa fa-trash-o text-danger"></i>
@@ -108,11 +108,11 @@ if ($legacy_calculation) {
                     </select>
                 </div>
             </td>
+            <td class="td-amount td-vert-middle"></td>
             <td class="td-amount td-vert-middle">
                 <span><?php _trans('subtotal'); ?></span><br/>
                 <span name="subtotal" class="amount"></span>
             </td>
-            <td class="td-amount td-vert-middle"></td>
 <?php
 if ( ! $legacy_calculation) {
     $this->layout->load_view('layout/partial/itemlist_table_item_discount_show');
@@ -173,6 +173,14 @@ foreach ($items as $item) {
                         <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                     </div>
                 </td>
+                <td class="td-amount">
+                    <div class="input-group">
+                        <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
+                        <input type="text" name="item_price_gross" class="form-control amount"
+                               value="<?php echo format_amount($item_price_gross); ?>">
+                        <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                    </div>
+                </td>
 <?php
         if ( ! $legacy_calculation) {
             $this->layout->load_view('layout/partial/itemlist_table_item_discount_input', ['item' => $item]);
@@ -202,14 +210,6 @@ foreach ($items as $item) {
             $this->layout->load_view('layout/partial/itemlist_table_item_discount_input', ['item' => $item]);
         }
     ?>
-                <td class="td-amount">
-                    <div class="input-group">
-                        <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
-                        <input type="text" name="item_price_gross" class="form-control amount"
-                               value="<?php echo format_amount($item_price_gross); ?>">
-                        <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
-                    </div>
-                </td>
                 <td class="td-icon text-right td-vert-middle">
                     <button type="button" class="btn_delete_item btn btn-link btn-sm" title="<?php _trans('delete'); ?>"
                             data-item-id="<?php echo $item->item_id; ?>">
@@ -244,13 +244,13 @@ foreach ($items as $item) {
                         </select>
                     </div>
                 </td>
+                <td class="td-amount td-vert-middle"></td>
                 <td class="td-amount td-vert-middle">
                     <span><?php _trans('subtotal'); ?></span><br/>
                     <span name="subtotal" class="amount">
                         <?php echo format_currency($item->item_subtotal); ?>
                     </span>
                 </td>
-                <td class="td-amount td-vert-middle"></td>
 <?php
         if ( ! $legacy_calculation) {
             $this->layout->load_view('layout/partial/itemlist_table_item_discount_show', ['item' => $item]);

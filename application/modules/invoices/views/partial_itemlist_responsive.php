@@ -81,8 +81,8 @@ foreach ($units as $unit) {
                                 <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                             </div>
                             <div class="input-group">
-                                <span class="input-group-addon ig-addon-aligned"><?php _trans('subtotal'); ?></span>
-                                <span name="subtotal" class="form-control"></span>
+                                <label for="item_price_gross" class="input-group-addon ig-addon-aligned"><?php echo trans('price'); ?> (Brutto)</label>
+                                <input type="text" name="item_price_gross" id="item_price_gross" class="form-control" value="">
                                 <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                             </div>
 <?php
@@ -120,10 +120,13 @@ if ($legacy_calculation) {
                         <input type="hidden" name="item_task_id" class="item-task-id" value="">
 
                         <div class="col-xs-12 col-md-6 text-right">
-                            <div class="input-group mb-1">
-                                <label for="item_price_gross" class="input-group-addon ig-addon-aligned"><?php echo trans('price'); ?> (Brutto)</label>
-                                <input type="text" name="item_price_gross" id="item_price_gross" class="form-control" value="">
-                                <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                            <div class="row mb-1">
+                                <div class="col-xs-9 col-sm-8">
+                                    <?php _trans('subtotal'); ?>:
+                                </div>
+                                <div class="col-xs-3 col-sm-4">
+                                    <span name="subtotal"></span>
+                                </div>
                             </div>
 <?php
 if ( ! $legacy_calculation) {
@@ -268,8 +271,9 @@ foreach ($items as $item) {
                                 <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                             </div>
                             <div class="input-group">
-                                <span class="input-group-addon ig-addon-aligned"><?php _trans('subtotal'); ?></span>
-                                <span class="form-control"><?php echo format_currency($item->item_subtotal); ?></span>
+                                <label for="item_price_gross_<?php echo $item->item_id; ?>" class="input-group-addon ig-addon-aligned"><?php echo trans('price'); ?> (Brutto)</label>
+                                <input type="text" name="item_price_gross" id="item_price_gross_<?php echo $item->item_id; ?>" class="form-control"
+                                       value="<?php echo format_amount($item_price_gross); ?>"<?php echo $invoice_disabled; ?>>
                                 <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                             </div>
 <?php
@@ -301,11 +305,13 @@ foreach ($items as $item) {
     ?>
                             </div>
                             <div class="col-xs-12 col-md-6 text-right">
-                                <div class="input-group mb-1">
-                                    <label for="item_price_gross_<?php echo $item->item_id; ?>" class="input-group-addon ig-addon-aligned"><?php echo trans('price'); ?> (Brutto)</label>
-                                    <input type="text" name="item_price_gross" id="item_price_gross_<?php echo $item->item_id; ?>" class="form-control"
-                                           value="<?php echo format_amount($item_price_gross); ?>"<?php echo $invoice_disabled; ?>>
-                                    <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                                <div class="row mb-1">
+                                    <div class="col-xs-9 col-sm-8">
+                                        <?php _trans('subtotal'); ?>:
+                                    </div>
+                                    <div class="col-xs-3 col-sm-4">
+                                        <?php echo format_currency($item->item_subtotal); ?>
+                                    </div>
                                 </div>
 <?php
         if ( ! $legacy_calculation) {
