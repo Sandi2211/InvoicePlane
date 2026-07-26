@@ -66,10 +66,17 @@ class Ajax extends Admin_Controller
                 $this->config->set_item('legacy_calculation', ! empty($this->input->post('legacy_calculation')));
             }
 
+            $tax_rate_percent_by_id = [];
+            $tax_rates = $this->db->select('tax_rate_id, tax_rate_percent')->get('ip_tax_rates')->result();
+            foreach ($tax_rates as $tax_rate) {
+                $tax_rate_percent_by_id[(int) $tax_rate->tax_rate_id] = (float) $tax_rate->tax_rate_percent;
+            }
+
             foreach ($items as $item) {
                 // Check if an item has either a quantity + price or name or description
                 if ( ! empty($item->item_name)) {
                     $has_item_price_gross = property_exists($item, 'item_price_gross') && $item->item_price_gross !== null && $item->item_price_gross !== '';
+                    $item_price_source = property_exists($item, 'item_price_source') ? $item->item_price_source : 'net';
 
                     // Standardize item data
                     $item->item_quantity        = $item->item_quantity ? standardize_amount($item->item_quantity) : 0.0;
@@ -82,6 +89,16 @@ class Ajax extends Admin_Controller
                     if (property_exists($item, 'item_date')) {
                         $item->item_date = $item->item_date ? date_to_mysql($item->item_date) : null;
                     }
+
+                    if ($has_item_price_gross && $item_price_source === 'gross') {
+                        $tax_rate_id = isset($item->item_tax_rate_id) ? (int) $item->item_tax_rate_id : 0;
+                        $tax_percent = $tax_rate_percent_by_id[$tax_rate_id] ?? 0.0;
+                        $tax_multiplier = 1 + ($tax_percent / 100);
+
+                        $item->item_price = round((float) $item->item_price_gross / $tax_multiplier, 8);
+                    }
+
+                    unset($item->item_price_source);
 
                     $item_id = ($item->item_id) ?: null;
                     unset($item->item_id);

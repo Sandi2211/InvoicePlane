@@ -92,6 +92,7 @@ if ($legacy_calculation) {
                         <input type="hidden" name="quote_id" value="<?php echo $quote_id; ?>">
                         <input type="hidden" name="item_id" value="">
                         <input type="hidden" name="item_product_id" value="">
+                        <input type="hidden" name="item_price_source" value="net">
                         <div class="col-xs-12 col-md-6 text-right">
                             <div class="row mb-1">
                                 <div class="col-xs-9 col-sm-8">
@@ -165,6 +166,7 @@ foreach ($items as $item) {
                             <input type="hidden" name="quote_id" value="<?php echo $quote_id; ?>">
                             <input type="hidden" name="item_id" value="<?php echo $item->item_id; ?>">
                             <input type="hidden" name="item_product_id" value="<?php echo $item->item_product_id; ?>">
+                            <input type="hidden" name="item_price_source" value="<?php echo $item_price_gross_source; ?>">
                             <div class="input-group">
                                 <label for="item_name_<?php echo $item->item_id; ?>" class="input-group-addon ig-addon-aligned"><?php _trans('item'); ?></label>
                                 <input type="text" name="item_name" id="item_name_<?php echo $item->item_id; ?>" class="form-control" value="<?php echo _htmlsc($item->item_name); ?>">

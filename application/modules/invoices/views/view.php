@@ -110,6 +110,7 @@ $edit_user_title = trans('edit') . ' ' . trans('user') . ' (' . trans('invoicing
 
         function syncItemRowPrices(row, source) {
             row.data('priceSource', source);
+            row.find('input[name=item_price_source]').val(source);
 
             if (source === 'gross') {
                 syncGrossToNet(row);

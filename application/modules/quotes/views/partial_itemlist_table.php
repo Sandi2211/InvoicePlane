@@ -31,6 +31,7 @@
                 <input type="hidden" name="quote_id" value="<?php echo $quote_id; ?>">
                 <input type="hidden" name="item_id" value="">
                 <input type="hidden" name="item_product_id" value="">
+                <input type="hidden" name="item_price_source" value="net">
 
                 <div class="input-group">
                     <span class="input-group-addon"><?php _trans('item'); ?></span>
@@ -108,11 +109,11 @@ if ($legacy_calculation) {
                     </select>
                 </div>
             </td>
-            <td class="td-amount td-vert-middle"></td>
             <td class="td-amount td-vert-middle">
                 <span><?php _trans('subtotal'); ?></span><br/>
                 <span name="subtotal" class="amount"></span>
             </td>
+            <td class="td-amount td-vert-middle"></td>
 <?php
 if ( ! $legacy_calculation) {
     $this->layout->load_view('layout/partial/itemlist_table_item_discount_show');
@@ -151,6 +152,7 @@ foreach ($items as $item) {
                     <input type="hidden" name="quote_id" value="<?php echo $quote_id; ?>">
                     <input type="hidden" name="item_id" value="<?php echo $item->item_id; ?>">
                     <input type="hidden" name="item_product_id" value="<?php echo $item->item_product_id; ?>">
+                    <input type="hidden" name="item_price_source" value="<?php echo $item_price_gross_source; ?>">
 
                     <div class="input-group">
                         <span class="input-group-addon"><?php _trans('item'); ?></span>
@@ -244,13 +246,13 @@ foreach ($items as $item) {
                         </select>
                     </div>
                 </td>
-                <td class="td-amount td-vert-middle"></td>
                 <td class="td-amount td-vert-middle">
                     <span><?php _trans('subtotal'); ?></span><br/>
                     <span name="subtotal" class="amount">
                         <?php echo format_currency($item->item_subtotal); ?>
                     </span>
                 </td>
+                <td class="td-amount td-vert-middle"></td>
 <?php
         if ( ! $legacy_calculation) {
             $this->layout->load_view('layout/partial/itemlist_table_item_discount_show', ['item' => $item]);
