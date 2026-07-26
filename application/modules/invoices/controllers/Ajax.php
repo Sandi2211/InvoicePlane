@@ -69,10 +69,12 @@ class Ajax extends Admin_Controller
             foreach ($items as $item) {
                 // Check if an item has either a quantity + price or name or description
                 if ( ! empty($item->item_name)) {
+                    $has_item_price_gross = property_exists($item, 'item_price_gross') && $item->item_price_gross !== null && $item->item_price_gross !== '';
+
                     // Standardize item data
                     $item->item_quantity        = $item->item_quantity ? standardize_amount($item->item_quantity) : 0.0;
                     $item->item_price           = $item->item_price ? standardize_amount($item->item_price) : 0.0;
-                    $item->item_price_gross     = $item->item_price_gross ? standardize_amount($item->item_price_gross) : null;
+                    $item->item_price_gross     = $has_item_price_gross ? standardize_amount($item->item_price_gross) : null;
                     $item->item_discount_amount = $item->item_discount_amount ? standardize_amount($item->item_discount_amount) : null;
                     $item->item_product_id      = $item->item_product_id ? $item->item_product_id : null;
                     $item->item_product_unit_id = $item->item_product_unit_id ? $item->item_product_unit_id : null;
@@ -95,7 +97,14 @@ class Ajax extends Admin_Controller
                     }
 
                     $this->mdl_items->save($item_id, $item, $global_discount);
-                } elseif (empty($item->item_name) && ( ! empty($item->item_quantity) || ! empty($item->item_price) || ! empty($item->item_price_gross))) {
+                } elseif (
+                    empty($item->item_name)
+                    && (
+                        ! empty($item->item_quantity)
+                        || ! empty($item->item_price)
+                        || (property_exists($item, 'item_price_gross') && ! empty($item->item_price_gross))
+                    )
+                ) {
                     // Throw an error message and use the form validation for that (todo: where the translations of: The .* field is required.)
                     $this->load->library('form_validation');
                     $this->form_validation->set_rules('item_name', trans('item'), 'required');
