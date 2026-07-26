@@ -71,8 +71,8 @@ class Mdl_Products extends Response_Model
                 'label' => trans('product_description'),
             ],
             'product_price' => [
-                'field' => 'product_price',
-                'label' => trans('product_price'),
+                'field' => 'product_price_gross',
+                'label' => trans('product_price') . ' (Brutto)',
                 'rules' => 'required',
             ],
             'purchase_price' => [
@@ -113,12 +113,45 @@ class Mdl_Products extends Response_Model
     {
         $db_array = parent::db_array();
 
-        $db_array['product_price']  = (empty($db_array['product_price']) ? null : standardize_amount($db_array['product_price']));
+        $tax_rate_id         = ! empty($db_array['tax_rate_id']) ? (int) $db_array['tax_rate_id'] : null;
+        $tax_rate_percent    = $this->get_tax_rate_percent($tax_rate_id);
+        $product_price_gross = $this->input->post('product_price_gross', true);
+
+        if ($product_price_gross !== null && $product_price_gross !== '') {
+            $product_price_gross = (float) standardize_amount($product_price_gross);
+            $db_array['product_price_gross'] = round($product_price_gross, 8);
+
+            if ($tax_rate_percent > 0) {
+                $tax_multiplier = 1 + ($tax_rate_percent / 100);
+                $db_array['product_price'] = round($product_price_gross / $tax_multiplier, 8);
+            } else {
+                $db_array['product_price'] = round($product_price_gross, 8);
+            }
+        } else {
+            $db_array['product_price_gross'] = null;
+            $db_array['product_price']       = (empty($db_array['product_price']) ? null : standardize_amount($db_array['product_price']));
+        }
+
         $db_array['purchase_price'] = (empty($db_array['purchase_price']) ? null : standardize_amount($db_array['purchase_price']));
         $db_array['family_id']      = (empty($db_array['family_id']) ? null : $db_array['family_id']);
         $db_array['unit_id']        = (empty($db_array['unit_id']) ? null : $db_array['unit_id']);
         $db_array['tax_rate_id']    = (empty($db_array['tax_rate_id']) ? null : $db_array['tax_rate_id']);
 
         return $db_array;
+    }
+
+    private function get_tax_rate_percent(?int $tax_rate_id): float
+    {
+        if ( ! $tax_rate_id) {
+            return 0.0;
+        }
+
+        $tax_rate = $this->db
+            ->select('tax_rate_percent')
+            ->where('tax_rate_id', $tax_rate_id)
+            ->get('ip_tax_rates')
+            ->row();
+
+        return $tax_rate ? (float) $tax_rate->tax_rate_percent : 0.0;
     }
 }

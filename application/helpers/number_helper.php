@@ -59,6 +59,40 @@ function format_amount($amount = null)
 }
 
 /**
+ * Return a formatted amount for form inputs with higher precision while keeping trailing zeros trimmed.
+ */
+function format_amount_precise($amount = null, int $decimals = 8, int $minimum_decimals = 2): ?string
+{
+    if ($amount === null || $amount === '') {
+        return null;
+    }
+
+    $CI                  = & get_instance();
+    $thousands_separator = $CI->mdl_settings->setting('thousands_separator');
+    $decimal_point       = $CI->mdl_settings->setting('decimal_point');
+    $amount              = (float) (is_numeric($amount) ? $amount : standardize_amount($amount));
+    $formatted           = number_format($amount, $decimals, $decimal_point, $thousands_separator);
+
+    if ($minimum_decimals >= $decimals || ! $decimal_point) {
+        return $formatted;
+    }
+
+    $parts = explode($decimal_point, $formatted, 2);
+    if (count($parts) !== 2) {
+        return $formatted;
+    }
+
+    $fraction = rtrim($parts[1], '0');
+    if ($fraction === '') {
+        $fraction = str_repeat('0', $minimum_decimals);
+    } elseif (strlen($fraction) < $minimum_decimals) {
+        $fraction = str_pad($fraction, $minimum_decimals, '0');
+    }
+
+    return $parts[0] . $decimal_point . $fraction;
+}
+
+/**
  * Return a formated amount as a quantity based on the system settings, e.g. 1.234,56.
  *
  *

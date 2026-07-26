@@ -55,6 +55,11 @@ foreach ($units as $unit) {
                                 <input type="text" name="item_price" id="item_price" class="form-control" value="">
                                 <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                             </div>
+                            <div class="input-group">
+                                <label for="item_price_gross" class="input-group-addon ig-addon-aligned"><?php echo trans('price'); ?> (Brutto)</label>
+                                <input type="text" name="item_price_gross" id="item_price_gross" class="form-control" value="">
+                                <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                            </div>
 <?php
 if ( ! $legacy_calculation) {
     $this->layout->load_view('layout/partial/itemlist_responsive_item_discount_input');
@@ -68,6 +73,7 @@ if ( ! $legacy_calculation) {
 foreach ($tax_rates as $tax_rate) {
     ?>
                                     <option value="<?php echo $tax_rate->tax_rate_id; ?>"
+                                            data-tax-rate-percent="<?php echo (float) $tax_rate->tax_rate_percent; ?>"
                                         <?php check_select(get_setting('default_item_tax_rate'), $tax_rate->tax_rate_id); ?>>
                                         <?php echo format_amount($tax_rate->tax_rate_percent) . '% - ' . htmlsc($tax_rate->tax_rate_name); ?>
                                     </option>
@@ -185,7 +191,13 @@ foreach ($items as $item) {
                             <div class="input-group">
                                 <label for="item_price_<?php echo $item->item_id; ?>" class="input-group-addon ig-addon-aligned"><?php _trans('price'); ?></label>
                                 <input type="text" name="item_price" id="item_price_<?php echo $item->item_id; ?>" class="form-control"
-                                       value="<?php echo format_amount($item->item_price); ?>">
+                                       value="<?php echo format_amount_precise($item->item_price); ?>">
+                                <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                            </div>
+                            <div class="input-group">
+                                <label for="item_price_gross_<?php echo $item->item_id; ?>" class="input-group-addon ig-addon-aligned"><?php echo trans('price'); ?> (Brutto)</label>
+                                <input type="text" name="item_price_gross" id="item_price_gross_<?php echo $item->item_id; ?>" class="form-control"
+                                       value="<?php echo format_amount_precise($item->item_price); ?>">
                                 <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                             </div>
 <?php
@@ -201,6 +213,7 @@ foreach ($items as $item) {
         foreach ($tax_rates as $tax_rate) {
             ?>
                                     <option value="<?php echo $tax_rate->tax_rate_id; ?>"
+                                            data-tax-rate-percent="<?php echo (float) $tax_rate->tax_rate_percent; ?>"
                                         <?php check_select($item->item_tax_rate_id, $tax_rate->tax_rate_id); ?>>
                                         <?php echo format_amount($tax_rate->tax_rate_percent) . '% - ' . htmlsc($tax_rate->tax_rate_name); ?>
                                     </option>

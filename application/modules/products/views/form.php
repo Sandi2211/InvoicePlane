@@ -9,6 +9,28 @@
 
     <div id="content">
 
+<?php
+    $product_price_gross = $this->mdl_products->form_value('product_price_gross');
+if ($product_price_gross === null || $product_price_gross === '') {
+    $product_price_gross = $this->mdl_products->form_value('product_price');
+    $tax_rate_id         = (int) $this->mdl_products->form_value('tax_rate_id');
+    $tax_rate_percent    = 0.0;
+
+    foreach ($tax_rates as $tax_rate) {
+        if ((int) $tax_rate->tax_rate_id === $tax_rate_id) {
+            $tax_rate_percent = (float) $tax_rate->tax_rate_percent;
+            break;
+        }
+    }
+
+    if ($product_price_gross !== null && $product_price_gross !== '') {
+        $product_price_gross = (float) $product_price_gross * (1 + ($tax_rate_percent / 100));
+    } else {
+        $product_price_gross = null;
+    }
+}
+?>
+
         <?php $this->layout->load_view('layout/alerts'); ?>
 
         <div class="row">
@@ -68,7 +90,6 @@
                             <textarea name="product_description" id="product_description" class="form-control"
                                       rows="3"><?php echo $this->mdl_products->form_value('product_description', true); ?></textarea>
                         </div>
-
                         <div class="form-group">
                             <label for="product_price">
                                 <?php _trans('product_price'); ?>
@@ -76,7 +97,19 @@
 
                             <div class="input-group has-feedback">
                                 <input type="text" name="product_price" id="product_price" class="form-control"
-                                       value="<?php echo format_amount($this->mdl_products->form_value('product_price')); ?>" required>
+                                       value="<?php echo format_amount_precise($this->mdl_products->form_value('product_price')); ?>" readonly>
+                                <span class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="product_price_gross">
+                                <?php _trans('product_price'); ?> (Brutto)
+                            </label>
+
+                            <div class="input-group has-feedback">
+                                <input type="text" name="product_price_gross" id="product_price_gross" class="form-control"
+                                       value="<?php echo format_amount($product_price_gross); ?>" required>
                                 <span class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></span>
                             </div>
                         </div>
