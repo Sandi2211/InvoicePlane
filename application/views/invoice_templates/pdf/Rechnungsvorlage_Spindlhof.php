@@ -68,9 +68,28 @@ switch ($invoice_mode) {
         }
 
         .pdf-footer td {
-            width: 25%;
             vertical-align: top;
             padding: 3mm 2mm 0 0;
+        }
+
+        .pdf-footer .footer-col-address {
+            width: 20%;
+        }
+
+        .pdf-footer .footer-col-contact {
+            width: 24%;
+        }
+
+        .pdf-footer .footer-col-bank {
+            width: 36%;
+        }
+
+        .pdf-footer .footer-col-signature {
+            width: 20%;
+        }
+
+        .pdf-footer .footer-iban {
+            white-space: nowrap;
         }
 
         .pdf-footer .footer-label {
@@ -425,15 +444,15 @@ if ($invoice->invoice_terms) {
 <htmlpagefooter name="spindlhofFooter">
     <table class="pdf-footer">
         <tr>
-            <td>
-                <span class="footer-label">Adresse</span>
+            <td class="footer-col-address">
+                <span class="footer-label">Spindlhof</span>
                 <div><?php _htmlsc($invoice->user_address_1); ?></div>
                 <?php if ($invoice->user_address_2) { ?>
                     <div><?php _htmlsc($invoice->user_address_2); ?></div>
                 <?php } ?>
                 <div><?php echo htmlsc(trim(($invoice->user_zip ?: '') . ' ' . ($invoice->user_city ?: ''))); ?></div>
             </td>
-            <td>
+            <td class="footer-col-contact">
                 <span class="footer-label"><?php _htmlsc($invoice->user_name); ?></span>
                 <?php if ($invoice->user_phone) { ?>
                     <div>Tel: <?php _htmlsc($invoice->user_phone); ?></div>
@@ -442,19 +461,18 @@ if ($invoice->invoice_terms) {
                     <div>Email: <?php _htmlsc($invoice->user_email); ?></div>
                 <?php } ?>
             </td>
-            <td>
-                <span class="footer-label">Bank</span>
+            <td class="footer-col-bank">
                 <?php if ($invoice->user_bank) { ?>
                     <div><?php _htmlsc($invoice->user_bank); ?></div>
                 <?php } ?>
                 <?php if ($invoice->user_iban) { ?>
-                    <div>IBAN: <?php _htmlsc($invoice->user_iban); ?></div>
+                    <div class="footer-iban">IBAN: <?php _htmlsc($invoice->user_iban); ?></div>
                 <?php } ?>
                 <?php if ($invoice->user_bic) { ?>
                     <div>BIC: <?php _htmlsc($invoice->user_bic); ?></div>
                 <?php } ?>
             </td>
-            <td class="footer-signature">
+            <td class="footer-signature footer-col-signature">
                 <?php if ($footer_signature_image) { ?>
                     <img src="<?php echo htmlsc($footer_signature_image); ?>" alt="Unterschrift">
                 <?php } ?>
