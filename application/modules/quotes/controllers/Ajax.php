@@ -71,6 +71,7 @@ class Ajax extends Admin_Controller
                     // Standardize item data
                     $item->item_quantity        = $item->item_quantity ? standardize_amount($item->item_quantity) : 0.0;
                     $item->item_price           = $item->item_price ? standardize_amount($item->item_price) : 0.0;
+                    $item->item_price_gross     = $item->item_price_gross ? standardize_amount($item->item_price_gross) : null;
                     $item->item_discount_amount = $item->item_discount_amount ? standardize_amount($item->item_discount_amount) : null;
                     $item->item_product_id      = $item->item_product_id ? $item->item_product_id : null;
                     $item->item_product_unit_id = $item->item_product_unit_id ? $item->item_product_unit_id : null;
@@ -80,7 +81,7 @@ class Ajax extends Admin_Controller
                     unset($item->item_id);
 
                     $this->mdl_quote_items->save($item_id, $item, $global_discount);
-                } elseif (empty($item->item_name) && ( ! empty($item->item_quantity) || ! empty($item->item_price))) {
+                } elseif (empty($item->item_name) && ( ! empty($item->item_quantity) || ! empty($item->item_price) || ! empty($item->item_price_gross))) {
                     // Throw an error message and use the form validation for that (todo: where the translations of: The .* field is required.)
                     $this->load->library('form_validation');
                     $this->form_validation->set_rules('item_name', trans('item'), 'required');
@@ -502,6 +503,7 @@ class Ajax extends Admin_Controller
                     'item_description'     => $quote_item->item_description,
                     'item_quantity'        => $quote_item->item_quantity,
                     'item_price'           => $quote_item->item_price,
+                    'item_price_gross'     => $quote_item->item_price_gross,
                     'item_product_unit_id' => $quote_item->item_product_unit_id,
                     'item_product_unit'    => $quote_item->item_product_unit,
                     'item_discount_amount' => $quote_item->item_discount_amount,

@@ -132,7 +132,8 @@ if ( ! $items) {
 ?>
 
         $('#item_table .item').each(function () {
-            syncItemRowPrices($(this), 'net');
+            var source = $(this).data('priceSource') === 'gross' ? 'gross' : 'net';
+            syncItemRowPrices($(this), source);
         });
 
         // Legacy:no: check items tax usage is correct (Load on change)

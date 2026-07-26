@@ -167,8 +167,15 @@ if ($legacy_calculation) {
 
 <?php
 foreach ($items as $item) {
+    $item_price_gross_source = 'gross';
+    $item_price_gross = $item->item_price_gross;
+
+    if ($item_price_gross === null || $item_price_gross === '') {
+        $item_price_gross_source = 'net';
+        $item_price_gross = (float) $item->item_price * (1 + (((float) $item->item_tax_rate_percent) / 100));
+    }
     ?>
-        <tbody class="item">
+        <tbody class="item" data-price-source="<?php echo $item_price_gross_source; ?>">
         <tr>
             <td rowspan="2" class="td-icon">
                 <i class="fa fa-arrows cursor-move"></i>
@@ -222,7 +229,7 @@ foreach ($items as $item) {
                 <div class="input-group">
                     <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
                     <input type="text" name="item_price_gross" class="form-control amount"
-                           value="<?php echo format_amount_precise($item->item_price); ?>"<?php echo $invoice_disabled; ?>>
+                           value="<?php echo format_amount($item_price_gross); ?>"<?php echo $invoice_disabled; ?>>
                     <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                 </div>
             </td>
