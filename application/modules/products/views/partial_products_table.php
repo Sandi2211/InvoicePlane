@@ -7,7 +7,8 @@
                 <th><?php _trans('product_sku'); ?></th>
                 <th><?php _trans('product_name'); ?></th>
                 <th><?php _trans('product_description'); ?></th>
-                <th class="amount last"><?php _trans('product_price'); ?></th>
+                <th class="amount"><?php _trans('product_price'); ?></th>
+                <th class="amount last"><?php _trans('product_price'); ?> (Brutto)</th>
                 <th><?php _trans('product_unit'); ?></th>
                 <th><?php _trans('tax_rate'); ?></th>
 <?php
@@ -25,13 +26,20 @@ $sumex_active = get_setting('sumex') == '1';
             <tbody>
 <?php
 foreach ($products as $product) {
+    if ($product->product_price_gross !== null && $product->product_price_gross !== '') {
+        $product_price_gross = (float) $product->product_price_gross;
+    } else {
+        $tax_rate_percent    = $product->tax_rate_id ? (float) $product->tax_rate_percent : 0.0;
+        $product_price_gross = (float) $product->product_price * (1 + ($tax_rate_percent / 100));
+    }
     ?>
                 <tr>
                     <td><a href="<?php echo site_url('families/form/' . $product->family_id); ?>"><i class="fa fa-edit"></i> <?php _htmlsc($product->family_name); ?></a></td>
                     <td><?php _htmlsc($product->product_sku); ?></td>
                     <td><a href="<?php echo site_url('products/form/' . $product->product_id); ?>"><i class="fa fa-edit"></i> <?php _htmlsc($product->product_name); ?></a></td>
                     <td><?php echo nl2br(htmlsc($product->product_description)); ?></td>
-                    <td class="amount last"><?php echo format_currency($product->product_price); ?></td>
+                    <td class="amount"><?php echo format_currency($product->product_price); ?></td>
+                    <td class="amount last"><?php echo format_currency($product_price_gross); ?></td>
                     <td><?php _htmlsc($product->unit_name); ?></td>
                     <td><?php echo ($product->tax_rate_id) ? htmlsc($product->tax_rate_name) : trans('none'); ?></td>
 <?php

@@ -12,8 +12,113 @@ $edit_user_title = trans('edit') . ' ' . trans('user') . ' (' . trans('invoicing
             $('#modal-placeholder').load("<?php echo site_url('products/ajax/modal_product_lookups'); ?>/" + Math.floor(Math.random() * 1000));
         });
 
+        var decimalPoint = <?php echo json_encode(get_setting('decimal_point')); ?>;
+        var thousandSeparator = <?php echo json_encode(get_setting('thousands_separator')); ?>;
+
+        function escapeRegex(value) {
+            return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function parseAmount(value) {
+            if (value === null || typeof value === 'undefined') {
+                return 0;
+            }
+
+            var normalized = String(value).trim();
+
+            if (normalized === '') {
+                return 0;
+            }
+
+            if (thousandSeparator) {
+                normalized = normalized.replace(new RegExp(escapeRegex(thousandSeparator), 'g'), '');
+            }
+
+            if (decimalPoint && decimalPoint !== '.') {
+                normalized = normalized.replace(new RegExp(escapeRegex(decimalPoint), 'g'), '.');
+            }
+
+            normalized = normalized.replace(/[^0-9.-]/g, '');
+
+            var parsed = parseFloat(normalized);
+
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function roundCommercial(value) {
+            if ( ! Number.isFinite(value)) {
+                return 0;
+            }
+
+            var absoluteValue = Math.abs(value);
+            var rounded = Math.round((absoluteValue + Number.EPSILON) * 100) / 100;
+
+            return value < 0 ? -rounded : rounded;
+        }
+
+        function formatAmountRounded(value) {
+            if ( ! Number.isFinite(value)) {
+                return '';
+            }
+
+            var formatted = roundCommercial(value).toFixed(2);
+
+            if (decimalPoint && decimalPoint !== '.') {
+                formatted = formatted.replace('.', decimalPoint);
+            }
+
+            return formatted;
+        }
+
+        function getRowTaxPercent(row) {
+            var taxPercent = parseFloat(row.find('select[name=item_tax_rate_id] option:selected').data('tax-rate-percent'));
+            return Number.isFinite(taxPercent) ? taxPercent : 0;
+        }
+
+        function syncNetToGross(row) {
+            var netPrice = roundCommercial(parseAmount(row.find('input[name=item_price]').val()));
+            var taxMultiplier = 1 + (getRowTaxPercent(row) / 100);
+            var grossPrice = roundCommercial(netPrice * taxMultiplier);
+
+            row.find('input[name=item_price]').val(formatAmountRounded(netPrice));
+            row.find('input[name=item_price_gross]').val(formatAmountRounded(grossPrice));
+        }
+
+        function syncGrossToNet(row) {
+            var grossPrice = roundCommercial(parseAmount(row.find('input[name=item_price_gross]').val()));
+            var taxMultiplier = 1 + (getRowTaxPercent(row) / 100);
+            var netPrice = taxMultiplier > 0 ? roundCommercial(grossPrice / taxMultiplier) : grossPrice;
+
+            row.find('input[name=item_price]').val(formatAmountRounded(netPrice));
+            row.find('input[name=item_price_gross]').val(formatAmountRounded(grossPrice));
+        }
+
+        function syncItemRowPrices(row, source) {
+            row.data('priceSource', source);
+
+            if (source === 'gross') {
+                syncGrossToNet(row);
+            } else {
+                syncNetToGross(row);
+            }
+        }
+
+        $(document).on('input change', '#item_table .item input[name=item_price]', function () {
+            syncItemRowPrices($(this).closest('.item'), 'net');
+        });
+
+        $(document).on('input change', '#item_table .item input[name=item_price_gross]', function () {
+            syncItemRowPrices($(this).closest('.item'), 'gross');
+        });
+
+        $(document).on('change', '#item_table .item select[name=item_tax_rate_id]', function () {
+            var row = $(this).closest('.item');
+            syncItemRowPrices(row, row.data('priceSource') === 'gross' ? 'gross' : 'net');
+        });
+
         $('.btn_add_row').click(function () {
             $('#new_row').clone().appendTo('#item_table').removeAttr('id').addClass('item').show();
+            syncItemRowPrices($('#item_table .item:last'), 'net');
             // Legacy:no: check items tax usage is correct (ReLoad on change)
             check_items_tax_usages();
         });
@@ -25,6 +130,10 @@ if ( ! $items) {
 <?php
 }
 ?>
+
+        $('#item_table .item').each(function () {
+            syncItemRowPrices($(this), 'net');
+        });
 
         // Legacy:no: check items tax usage is correct (Load on change)
         $(document).on('loaded', check_items_tax_usages());

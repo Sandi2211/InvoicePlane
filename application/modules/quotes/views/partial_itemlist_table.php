@@ -11,6 +11,7 @@
 -->
             <th class="amount"><?php _trans('quantity'); ?></th>
             <th class="amount"><?php _trans('price'); ?></th>
+            <th class="amount"><?php echo trans('price'); ?> (Brutto)</th>
             <?php echo $legacy_calculation ? '' : '<th class="amount">' . trans('item_discount') . '</th>' ?>
             <th class="amount"><?php _trans('tax_rate'); ?></th>
             <?php echo $legacy_calculation ? '<th class="amount">' . trans('item_discount') . '</th>' : '' ?>
@@ -49,6 +50,13 @@
                     <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                 </div>
             </td>
+            <td class="td-amount">
+                <div class="input-group">
+                    <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
+                    <input type="text" name="item_price_gross" class="form-control amount" value="">
+                    <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                </div>
+            </td>
 <?php
 if ( ! $legacy_calculation) {
     $this->layout->load_view('layout/partial/itemlist_table_item_discount_input');
@@ -60,7 +68,8 @@ if ( ! $legacy_calculation) {
                     <select name="item_tax_rate_id" class="form-control">
                         <option value="0"><?php _trans('none'); ?></option>
                         <?php foreach ($tax_rates as $tax_rate) { ?>
-                            <option value="<?php echo $tax_rate->tax_rate_id; ?>">
+                            <option value="<?php echo $tax_rate->tax_rate_id; ?>"
+                                    data-tax-rate-percent="<?php echo (float) $tax_rate->tax_rate_percent; ?>">
                                 <?php echo format_amount($tax_rate->tax_rate_percent) . '% - ' . htmlsc($tax_rate->tax_rate_name); ?>
                             </option>
                         <?php } ?>
@@ -99,6 +108,7 @@ if ($legacy_calculation) {
                     </select>
                 </div>
             </td>
+            <td class="td-amount td-vert-middle"></td>
             <td class="td-amount td-vert-middle">
                 <span><?php _trans('subtotal'); ?></span><br/>
                 <span name="subtotal" class="amount"></span>
@@ -152,7 +162,15 @@ foreach ($items as $item) {
                     <div class="input-group">
                         <span class="input-group-addon"><?php _trans('price'); ?></span>
                         <input type="text" name="item_price" class="form-control amount"
-                               value="<?php echo format_amount($item->item_price); ?>">
+                               value="<?php echo format_amount_precise($item->item_price); ?>">
+                        <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
+                    </div>
+                </td>
+                <td class="td-amount">
+                    <div class="input-group">
+                        <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
+                        <input type="text" name="item_price_gross" class="form-control amount"
+                               value="<?php echo format_amount_precise($item->item_price); ?>">
                         <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                     </div>
                 </td>
@@ -170,7 +188,8 @@ foreach ($items as $item) {
         foreach ($tax_rates as $tax_rate) {
             $is_selected = ($item->item_tax_rate_id == $tax_rate->tax_rate_id) ? ' selected="selected"' : '';
             ?>
-                            <option value="<?php echo $tax_rate->tax_rate_id; ?>"<?php echo $is_selected; ?>>
+                            <option value="<?php echo $tax_rate->tax_rate_id; ?>"
+                                    data-tax-rate-percent="<?php echo (float) $tax_rate->tax_rate_percent; ?>"<?php echo $is_selected; ?>>
                                 <?php echo format_amount($tax_rate->tax_rate_percent) . '% - ' . htmlsc($tax_rate->tax_rate_name); ?>
                             </option>
 <?php
@@ -218,6 +237,7 @@ foreach ($items as $item) {
                         </select>
                     </div>
                 </td>
+                <td class="td-amount td-vert-middle"></td>
                 <td class="td-amount td-vert-middle">
                     <span><?php _trans('subtotal'); ?></span><br/>
                     <span name="subtotal" class="amount">
