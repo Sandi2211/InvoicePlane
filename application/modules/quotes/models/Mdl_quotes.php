@@ -249,6 +249,7 @@ class Mdl_Quotes extends Response_Model
                 'item_description'     => $quote_item->item_description,
                 'item_quantity'        => $quote_item->item_quantity,
                 'item_price'           => $quote_item->item_price,
+                'item_price_gross'     => $quote_item->item_price_gross,
                 'item_discount_amount' => $quote_item?->item_discount_amount,
                 'item_order'           => $quote_item->item_order,
                 'item_product_unit'    => $quote_item?->item_product_unit,

@@ -66,12 +66,22 @@ class Ajax extends Admin_Controller
                 $this->config->set_item('legacy_calculation', ! empty($this->input->post('legacy_calculation')));
             }
 
+            $tax_rate_percent_by_id = [];
+            $tax_rates = $this->db->select('tax_rate_id, tax_rate_percent')->get('ip_tax_rates')->result();
+            foreach ($tax_rates as $tax_rate) {
+                $tax_rate_percent_by_id[(int) $tax_rate->tax_rate_id] = (float) $tax_rate->tax_rate_percent;
+            }
+
             foreach ($items as $item) {
                 // Check if an item has either a quantity + price or name or description
                 if ( ! empty($item->item_name)) {
+                    $has_item_price_gross = property_exists($item, 'item_price_gross') && $item->item_price_gross !== null && $item->item_price_gross !== '';
+                    $item_price_source = property_exists($item, 'item_price_source') ? $item->item_price_source : 'net';
+
                     // Standardize item data
                     $item->item_quantity        = $item->item_quantity ? standardize_amount($item->item_quantity) : 0.0;
                     $item->item_price           = $item->item_price ? standardize_amount($item->item_price) : 0.0;
+                    $item->item_price_gross     = $has_item_price_gross ? standardize_amount($item->item_price_gross) : null;
                     $item->item_discount_amount = $item->item_discount_amount ? standardize_amount($item->item_discount_amount) : null;
                     $item->item_product_id      = $item->item_product_id ? $item->item_product_id : null;
                     $item->item_product_unit_id = $item->item_product_unit_id ? $item->item_product_unit_id : null;
@@ -79,6 +89,16 @@ class Ajax extends Admin_Controller
                     if (property_exists($item, 'item_date')) {
                         $item->item_date = $item->item_date ? date_to_mysql($item->item_date) : null;
                     }
+
+                    if ($has_item_price_gross && $item_price_source === 'gross') {
+                        $tax_rate_id = isset($item->item_tax_rate_id) ? (int) $item->item_tax_rate_id : 0;
+                        $tax_percent = $tax_rate_percent_by_id[$tax_rate_id] ?? 0.0;
+                        $tax_multiplier = 1 + ($tax_percent / 100);
+
+                        $item->item_price = round((float) $item->item_price_gross / $tax_multiplier, 8);
+                    }
+
+                    unset($item->item_price_source);
 
                     $item_id = ($item->item_id) ?: null;
                     unset($item->item_id);
@@ -94,7 +114,14 @@ class Ajax extends Admin_Controller
                     }
 
                     $this->mdl_items->save($item_id, $item, $global_discount);
-                } elseif (empty($item->item_name) && ( ! empty($item->item_quantity) || ! empty($item->item_price))) {
+                } elseif (
+                    empty($item->item_name)
+                    && (
+                        ! empty($item->item_quantity)
+                        || ! empty($item->item_price)
+                        || (property_exists($item, 'item_price_gross') && ! empty($item->item_price_gross))
+                    )
+                ) {
                     // Throw an error message and use the form validation for that (todo: where the translations of: The .* field is required.)
                     $this->load->library('form_validation');
                     $this->form_validation->set_rules('item_name', trans('item'), 'required');
@@ -107,7 +134,8 @@ class Ajax extends Admin_Controller
                         ],
                     ];
 
-                    $this->json_encode_ajax($response);
+                    echo json_encode($response);
+                    exit;
                 }
             }
 
@@ -127,7 +155,8 @@ class Ajax extends Admin_Controller
                         ],
                     ];
 
-                    $this->json_encode_ajax($response);
+                    echo json_encode($response);
+                    exit;
                 }
             }
 
@@ -225,11 +254,13 @@ class Ajax extends Admin_Controller
                     'validation_errors' => $result,
                 ];
 
-                $this->json_encode_ajax($response);
+                echo json_encode($response);
+                exit;
             }
         }
 
-        $this->json_encode_ajax($response);
+        echo json_encode($response);
+        exit;
     }
 
     public function save_invoice_tax_rate()

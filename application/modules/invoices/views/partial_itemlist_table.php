@@ -41,6 +41,7 @@ $invoice_disabled = $invoice->is_read_only != 1 ? '' : ' disabled="disabled"';
                 <input type="hidden" name="invoice_id" value="<?php echo $invoice_id; ?>">
                 <input type="hidden" name="item_id" value="">
                 <input type="hidden" name="item_product_id" value="">
+                <input type="hidden" name="item_price_source" value="net">
                 <input type="hidden" name="item_task_id" class="item-task-id" value="">
 
                 <div class="input-group">
@@ -139,11 +140,11 @@ if ($invoice->sumex_id == '') {
                     </select>
                 </div>
             </td>
-            <td class="td-amount td-vert-middle"></td>
             <td class="td-amount td-vert-middle">
                 <span><?php _trans('subtotal'); ?></span><br/>
                 <span name="subtotal" class="amount"></span>
             </td>
+            <td class="td-amount td-vert-middle"></td>
 <?php
 if ( ! $legacy_calculation) {
     $this->layout->load_view('layout/partial/itemlist_table_item_discount_show');
@@ -167,8 +168,15 @@ if ($legacy_calculation) {
 
 <?php
 foreach ($items as $item) {
+    $item_price_gross_source = 'gross';
+    $item_price_gross = $item->item_price_gross;
+
+    if ($item_price_gross === null || $item_price_gross === '') {
+        $item_price_gross_source = 'net';
+        $item_price_gross = (float) $item->item_price * (1 + (((float) $item->item_tax_rate_percent) / 100));
+    }
     ?>
-        <tbody class="item">
+        <tbody class="item" data-price-source="<?php echo $item_price_gross_source; ?>">
         <tr>
             <td rowspan="2" class="td-icon">
                 <i class="fa fa-arrows cursor-move"></i>
@@ -196,6 +204,7 @@ foreach ($items as $item) {
                 <input type="hidden" name="item_task_id" class="item-task-id"
                        value="<?php echo $item->item_task_id ? $item->item_task_id : ''; ?>">
                 <input type="hidden" name="item_product_id" value="<?php echo $item->item_product_id; ?>">
+                <input type="hidden" name="item_price_source" value="<?php echo $item_price_gross_source; ?>">
 
                 <div class="input-group">
                     <span class="input-group-addon"><?php _trans('item'); ?></span>
@@ -222,7 +231,7 @@ foreach ($items as $item) {
                 <div class="input-group">
                     <span class="input-group-addon"><?php echo trans('price'); ?> (Brutto)</span>
                     <input type="text" name="item_price_gross" class="form-control amount"
-                           value="<?php echo format_amount_precise($item->item_price); ?>"<?php echo $invoice_disabled; ?>>
+                           value="<?php echo format_amount($item_price_gross); ?>"<?php echo $invoice_disabled; ?>>
                     <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                 </div>
             </td>
@@ -312,13 +321,13 @@ foreach ($items as $item) {
                         </select>
                     </div>
                 </td>
-                <td class="td-amount td-vert-middle"></td>
                 <td class="td-amount td-vert-middle">
                     <span><?php _trans('subtotal'); ?></span><br/>
                     <span name="subtotal" class="amount">
                         <?php echo format_currency($item->item_subtotal); ?>
                     </span>
                 </td>
+                <td class="td-amount td-vert-middle"></td>
 <?php
         if ( ! $legacy_calculation) {
             $this->layout->load_view('layout/partial/itemlist_table_item_discount_show', ['item' => $item]);

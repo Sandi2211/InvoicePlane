@@ -92,6 +92,7 @@ if ($legacy_calculation) {
                         <input type="hidden" name="quote_id" value="<?php echo $quote_id; ?>">
                         <input type="hidden" name="item_id" value="">
                         <input type="hidden" name="item_product_id" value="">
+                        <input type="hidden" name="item_price_source" value="net">
                         <div class="col-xs-12 col-md-6 text-right">
                             <div class="row mb-1">
                                 <div class="col-xs-9 col-sm-8">
@@ -137,8 +138,15 @@ if ($legacy_calculation) {
 
 <?php
 foreach ($items as $item) {
+    $item_price_gross_source = 'gross';
+    $item_price_gross = $item->item_price_gross;
+
+    if ($item_price_gross === null || $item_price_gross === '') {
+        $item_price_gross_source = 'net';
+        $item_price_gross = (float) $item->item_price * (1 + (((float) $item->item_tax_rate_percent) / 100));
+    }
     ?>
-        <div class="form-group details-box item">
+        <div class="form-group details-box item" data-price-source="<?php echo $item_price_gross_source; ?>">
             <div class="row">
                 <div class="col-xs-12 col-sm-7 col-md-6 col-lg-5">
                     <div class="row">
@@ -158,6 +166,7 @@ foreach ($items as $item) {
                             <input type="hidden" name="quote_id" value="<?php echo $quote_id; ?>">
                             <input type="hidden" name="item_id" value="<?php echo $item->item_id; ?>">
                             <input type="hidden" name="item_product_id" value="<?php echo $item->item_product_id; ?>">
+                            <input type="hidden" name="item_price_source" value="<?php echo $item_price_gross_source; ?>">
                             <div class="input-group">
                                 <label for="item_name_<?php echo $item->item_id; ?>" class="input-group-addon ig-addon-aligned"><?php _trans('item'); ?></label>
                                 <input type="text" name="item_name" id="item_name_<?php echo $item->item_id; ?>" class="form-control" value="<?php echo _htmlsc($item->item_name); ?>">
@@ -197,7 +206,7 @@ foreach ($items as $item) {
                             <div class="input-group">
                                 <label for="item_price_gross_<?php echo $item->item_id; ?>" class="input-group-addon ig-addon-aligned"><?php echo trans('price'); ?> (Brutto)</label>
                                 <input type="text" name="item_price_gross" id="item_price_gross_<?php echo $item->item_id; ?>" class="form-control"
-                                       value="<?php echo format_amount_precise($item->item_price); ?>">
+                                       value="<?php echo format_amount($item_price_gross); ?>">
                                 <div class="input-group-addon"><?php echo get_setting('currency_symbol'); ?></div>
                             </div>
 <?php
