@@ -8,7 +8,7 @@ $add_table_and_head_for_sums = 1; // Set to 0/false/null/'', return to original 
 // Note: watermarktext not applied if embed xml (Zugferd/Factur-x) pdf A (see mpdf_helper)
 
 // Init some vars (edit if you know what you're doing)
-$colspan            = $show_item_discounts ? 6 : 5;
+$colspan            = $show_item_discounts ? 7 : 6;
 $text_class         = '';
 $text_class_date    = '';
 $text_class_balance = '';
@@ -16,16 +16,6 @@ $watermark          = '';
 $stamp              = '';
 $show_qrcode        = $invoice->invoice_balance > 0 && $invoice->invoice_balance < 10e9 && get_setting('qr_code');
 $invoice_mode ??= 'default'; // from template - overdue / paid.php
-$footer_signature_image = '';
-
-foreach (['Unterschrift.png', 'unterschrift.png', 'signature.png'] as $footer_signature_candidate) {
-    $footer_signature_path = __DIR__ . DIRECTORY_SEPARATOR . $footer_signature_candidate;
-
-    if (is_file($footer_signature_path)) {
-        $footer_signature_image = str_replace('\\', '/', $footer_signature_path);
-        break;
-    }
-}
 
 switch ($invoice_mode) {
     case 'overdue':
@@ -74,20 +64,15 @@ switch ($invoice_mode) {
         }
 
         .pdf-footer .footer-col-address {
-            width: 18%;
+            width: 20%;
         }
 
         .pdf-footer .footer-col-contact {
-            width: 22%;
+            width: 25%;
         }
 
         .pdf-footer .footer-col-bank {
-            width: 35%;
-        }
-
-        .pdf-footer .footer-col-signature {
-            width: 25%;
-            max-width: 25%;
+            width: 55%;
         }
 
         .pdf-footer .footer-iban {
@@ -98,16 +83,6 @@ switch ($invoice_mode) {
             display: block;
             font-weight: bold;
             margin-bottom: 1mm;
-        }
-
-        .pdf-footer .footer-signature {
-            text-align: center;
-        }
-
-        .pdf-footer .footer-signature img {
-            display: inline-block;
-            max-width: 100%;
-            max-height: 22mm;
         }
     </style>
 </head>
@@ -246,7 +221,7 @@ if ($invoice->user_fax) {
             <th class="item-name"><?php _trans('item'); ?></th>
             <th class="item-desc"><?php _trans('description'); ?></th>
             <th class="item-amount text-right"><?php _trans('qty'); ?></th>
-            <th class="item-price text-right"><?php _trans('price'); ?></th>
+            <th class="item-price text-right">Netto</th>
             <?php
 if ($show_item_discounts) {
     ?>
@@ -255,6 +230,7 @@ if ($show_item_discounts) {
 }
 ?>
             <th class="item-tax text-right"><?php _trans('tax'); ?></th>
+            <th class="item-price text-right">Brutto</th>
             <th class="item-total text-right"><?php _trans('total'); ?></th>
         </tr>
         </thead>
@@ -287,6 +263,13 @@ if ($show_item_discounts) {
             ?>
                 <td class="text-right">
                     <?php echo format_amount($item->item_tax_rate_percent ?? 0) . '%'; ?>
+                </td>
+                <td class="text-right">
+                    <?php
+                    $item_tax_rate_percent = (float) ($item->item_tax_rate_percent ?? 0);
+                    $item_gross_price      = (float) $item->item_price * (1 + ($item_tax_rate_percent / 100));
+                    echo format_currency($item_gross_price);
+                    ?>
                 </td>
                 <td class="text-right">
                     <?php echo format_currency(htmlsc($item->item_total)); ?>
@@ -472,11 +455,6 @@ if ($invoice->invoice_terms) {
                 <?php } ?>
                 <?php if ($invoice->user_bic) { ?>
                     <div>BIC: <?php _htmlsc($invoice->user_bic); ?></div>
-                <?php } ?>
-            </td>
-            <td class="footer-signature footer-col-signature">
-                <?php if ($footer_signature_image) { ?>
-                    <img src="<?php echo htmlsc($footer_signature_image); ?>" alt="Unterschrift">
                 <?php } ?>
             </td>
         </tr>
