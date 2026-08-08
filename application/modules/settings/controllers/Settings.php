@@ -16,6 +16,10 @@ if ( ! defined('BASEPATH')) {
 #[AllowDynamicProperties]
 class Settings extends Admin_Controller
 {
+    private const DEFAULT_INVOICES_DUE_AFTER = 30;
+
+    private const DEFAULT_QUOTES_EXPIRE_AFTER = 15;
+
     private const MIN_TAX_RATE_DECIMALS = 2;
 
     private const MAX_TAX_RATE_DECIMALS = 3;
@@ -51,6 +55,16 @@ class Settings extends Admin_Controller
         if ($this->input->post('settings')) {
             $settings = $this->input->post('settings');
 
+            $settings = $this->handleNonNegativeIntegerSetting(
+                $settings,
+                'invoices_due_after',
+                self::DEFAULT_INVOICES_DUE_AFTER
+            );
+            $settings = $this->handleNonNegativeIntegerSetting(
+                $settings,
+                'quotes_expire_after',
+                self::DEFAULT_QUOTES_EXPIRE_AFTER
+            );
             $settings = $this->handleTaxRateDecimalPlaces($settings);
 
             // Build array of all settings to save in a single batch operation
@@ -422,6 +436,50 @@ class Settings extends Admin_Controller
 
         // Remove the entry to avoid double-processing in the general settings loop.
         unset($settings['tax_rate_decimal_places']);
+
+        return $settings;
+    }
+
+    /**
+     * Validate settings that must be stored as non-negative integers.
+     *
+     * @param array  $settings
+     * @param string $setting_key
+     * @param int    $default
+     *
+     * @return array
+     */
+    private function handleNonNegativeIntegerSetting(array $settings, string $setting_key, int $default): array
+    {
+        if ( ! array_key_exists($setting_key, $settings)) {
+            return $settings;
+        }
+
+        $value = filter_var(
+            $settings[$setting_key],
+            FILTER_VALIDATE_INT,
+            [
+                'options' => [
+                    'min_range' => 0,
+                ],
+            ]
+        );
+
+        if ($value === false) {
+            log_message(
+                'error',
+                sprintf(
+                    'Invalid %s setting value: %s. Expected a non-negative integer, default: %d.',
+                    sanitize_for_logging($setting_key),
+                    sanitize_for_logging((string) $settings[$setting_key]),
+                    $default
+                )
+            );
+            $this->session->set_flashdata('alert_error', trans('invalid_day_count_setting'));
+            redirect('settings');
+        }
+
+        $settings[$setting_key] = (string) $value;
 
         return $settings;
     }

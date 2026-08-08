@@ -65,7 +65,8 @@ foreach ($payment_methods as $payment_method) {
                                 <?php _trans('invoices_due_after'); ?>
                             </label>
                             <input type="number" name="settings[invoices_due_after]" id="settings[invoices_due_after]"
-                                   class="form-control" value="<?php echo get_setting('invoices_due_after', '', true); ?>">
+                                   class="form-control" min="0" step="1" required
+                                   value="<?php echo html_escape((string) get_non_negative_integer_setting('invoices_due_after', 30, false)); ?>">
                         </div>
 
                         <div class="form-group">

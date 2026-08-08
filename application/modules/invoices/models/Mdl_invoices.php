@@ -455,7 +455,9 @@ class Mdl_Invoices extends Response_Model
     public function get_date_due($invoice_date_created)
     {
         $invoice_date_due = new DateTime($invoice_date_created);
-        $invoice_date_due->add(new DateInterval('P' . get_setting('invoices_due_after') . 'D'));
+        $invoice_date_due->add(
+            new DateInterval('P' . get_non_negative_integer_setting('invoices_due_after', 30) . 'D')
+        );
 
         return $invoice_date_due->format('Y-m-d');
     }
