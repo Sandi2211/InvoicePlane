@@ -31,6 +31,48 @@ function get_setting($setting_key, $default = '', $escape = false)
 }
 
 /**
+ * Get a non-negative integer setting value.
+ *
+ * Falls back to the provided default when the stored setting is empty or
+ * invalid. Optionally logs the invalid value to help diagnose broken
+ * configuration on existing installs.
+ */
+function get_non_negative_integer_setting(string $setting_key, int $default, bool $log_invalid = true): int
+{
+    $raw_value = get_setting($setting_key, (string) $default);
+    $value     = filter_var(
+        $raw_value,
+        FILTER_VALIDATE_INT,
+        [
+            'options' => [
+                'min_range' => 0,
+            ],
+        ]
+    );
+
+    if ($value === false) {
+        if ($log_invalid) {
+            $CI = & get_instance();
+            $CI->load->helper('file_security');
+
+            log_message(
+                'warning',
+                sprintf(
+                    'Invalid %s setting value: %s. Falling back to %d.',
+                    sanitize_for_logging($setting_key),
+                    sanitize_for_logging((string) $raw_value),
+                    $default
+                )
+            );
+        }
+
+        return $default;
+    }
+
+    return (int) $value;
+}
+
+/**
  * Get the settings for a payment gateway.
  *
  * @param string $gateway

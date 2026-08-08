@@ -286,6 +286,7 @@ $lang = [
     'invalid_date'                                  => 'Invalid date',
     'invalid_file_path'                             => 'Invalid file path. Operation not permitted.',
     'invalid_tax_rate_decimal_places'               => 'Invalid tax rate decimal places. Must be 2 or 3.',
+    'invalid_day_count_setting'                     => 'Invalid day count setting. Please enter a whole number of days greater than or equal to 0.',
     'contains_invalid_characters'                   => 'contains invalid characters',
     'invalid_filename'                              => 'Invalid filename. Path traversal characters are not allowed.',
     'invalid_file_path_outside_allowed_directory'   => 'Invalid file path. File is outside the allowed directory.',

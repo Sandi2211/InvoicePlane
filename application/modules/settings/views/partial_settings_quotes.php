@@ -42,8 +42,8 @@
                                 <?php _trans('quotes_expire_after'); ?>
                             </label>
                             <input type="number" name="settings[quotes_expire_after]" id="settings[quotes_expire_after]"
-                                class="form-control"
-                                value="<?php echo get_setting('quotes_expire_after', '', true); ?>">
+                                   class="form-control" min="0" step="1" required
+                                   value="<?php echo html_escape((string) get_non_negative_integer_setting('quotes_expire_after', 15, false)); ?>">
                         </div>
 
                         <div class="form-group">

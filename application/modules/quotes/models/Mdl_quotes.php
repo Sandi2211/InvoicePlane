@@ -326,7 +326,9 @@ class Mdl_Quotes extends Response_Model
     public function get_date_due($quote_date_created)
     {
         $quote_date_expires = new DateTime($quote_date_created);
-        $quote_date_expires->add(new DateInterval('P' . get_setting('quotes_expire_after') . 'D'));
+        $quote_date_expires->add(
+            new DateInterval('P' . get_non_negative_integer_setting('quotes_expire_after', 15) . 'D')
+        );
 
         return $quote_date_expires->format('Y-m-d');
     }
