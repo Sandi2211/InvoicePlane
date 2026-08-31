@@ -18,7 +18,7 @@ $disabled  = env_bool('DISABLE_SETUP') ? ' hidden' : '';
     <!-- Use the .htaccess and remove these lines to avoid edge case issues -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-    <title><?php echo get_setting('custom_title', 'InvoicePlane', true); ?></title>
+    <title><?php echo get_setting('custom_title', 'Rechnungen Spindlhof', true); ?></title>
 
     <!-- Mobile viewport optimized: j.mp/bplateviewport -->
     <meta name="viewport" content="width=device-width">

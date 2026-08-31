@@ -1,4 +1,4 @@
-<title><?php echo get_setting('custom_title', 'InvoicePlane', true); ?></title>
+<title><?php echo get_setting('custom_title', 'Rechnungen Spindlhof', true); ?></title>
 
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
