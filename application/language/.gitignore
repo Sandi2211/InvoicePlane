@@ -1,4 +1,7 @@
 *
 !english
 !english/*
+!german
+german/*
+!german/custom_lang.php
 !.gitignore
