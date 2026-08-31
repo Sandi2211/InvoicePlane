@@ -52,6 +52,10 @@
             $('#modal-placeholder').load("<?php echo site_url('invoices/ajax/modal_create_invoice'); ?>");
         });
 
+        $(document).on('click', '.create-room-invoice', function () {
+            $('#modal-placeholder').load("<?php echo site_url('invoices/ajax/modal_create_room_invoice'); ?>");
+        });
+
         $(document).on('click', '.create-quote', function () {
             $('#modal-placeholder').load("<?php echo site_url('quotes/ajax/modal_create_quote'); ?>");
         });

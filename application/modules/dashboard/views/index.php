@@ -19,6 +19,10 @@
                         <i class="fa fa-file fa-margin"></i>
                         <span class="hidden-xs"><?php _trans('create_quote'); ?></span>
                     </a>
+                    <a href="javascript:void(0)" class="create-room-invoice btn btn-default">
+                        <i class="fa fa-bed fa-margin"></i>
+                        <span class="hidden-xs"><?php _trans('create_room_invoice'); ?></span>
+                    </a>
                     <a href="javascript:void(0)" class="create-invoice btn btn-default">
                         <i class="fa fa-file-text fa-margin"></i>
                         <span class="hidden-xs"><?php _trans('create_invoice'); ?></span>

@@ -519,6 +519,262 @@ class Ajax extends Admin_Controller
         $this->json_encode_ajax($response);
     }
 
+    public function modal_create_room_invoice()
+    {
+        $this->load->module('layout');
+        $this->load->model([
+            'tax_rates/mdl_tax_rates',
+            'clients/mdl_clients',
+            'products/mdl_products',
+            'families/mdl_families',
+        ]);
+
+        $rooms  = [];
+        $family = $this->mdl_families->where('family_name', 'Zimmer')->get()->row();
+
+        if ($family) {
+            $this->mdl_products->by_family($family->family_id);
+            $rooms = $this->mdl_products->get()->result();
+        }
+
+        foreach ($rooms as $room) {
+            $room->price_gross = $this->product_gross_price($room);
+        }
+
+        $city_tax = $this->mdl_products->where('ip_products.product_name', 'Ortstaxe')->get()->row();
+        $cleaning = $this->mdl_products->where('ip_products.product_name', 'Endreinigung')->get()->row();
+
+        $setup_errors = [];
+
+        if (empty($rooms)) {
+            $setup_errors[] = trans('room_invoice_family_missing');
+        }
+
+        if ( ! $city_tax) {
+            $setup_errors[] = trans('room_invoice_product_missing') . ' Ortstaxe';
+        }
+
+        if ( ! $cleaning) {
+            $setup_errors[] = trans('room_invoice_product_missing') . ' Endreinigung';
+        }
+
+        if ( ! get_setting('default_invoice_group')) {
+            $setup_errors[] = trans('room_invoice_default_group_missing');
+        }
+
+        $data = [
+            'tax_rates'            => $this->mdl_tax_rates->get()->result(),
+            'client'               => $this->mdl_clients->get_by_id($this->input->post('client_id')),
+            'clients'              => $this->mdl_clients->get_latest(),
+            'rooms'                => $rooms,
+            'cleaning_price_gross' => $cleaning ? $this->product_gross_price($cleaning) : 0.0,
+            'setup_errors'         => $setup_errors,
+        ];
+
+        $this->layout->load_view('invoices/modal_create_room_invoice', $data);
+    }
+
+    public function create_room_invoice()
+    {
+        $this->load->model([
+            'invoices/mdl_invoices',
+            'invoices/mdl_items',
+            'products/mdl_products',
+            'families/mdl_families',
+            'tax_rates/mdl_tax_rates',
+            'units/mdl_units',
+        ]);
+
+        $validation_errors = [];
+
+        // The room must belong to the "Zimmer" product family
+        $room    = null;
+        $room_id = (int) $this->input->post('room_product_id');
+        $family  = $this->mdl_families->where('family_name', 'Zimmer')->get()->row();
+
+        if ($family && $room_id) {
+            $this->mdl_products->by_family($family->family_id);
+            $room = $this->mdl_products->where('ip_products.product_id', $room_id)->get()->row();
+        }
+
+        if ( ! $room) {
+            $validation_errors['room_product_id'] = trans('room');
+        }
+
+        $price_gross = (float) standardize_amount($this->input->post('room_price_per_night'));
+
+        if ($price_gross <= 0) {
+            $validation_errors['room_price_per_night'] = trans('price_per_night_gross');
+        }
+
+        $tax_rate_id = (int) $this->input->post('room_tax_rate_id');
+        $tax_rate    = $this->mdl_tax_rates->where('tax_rate_id', $tax_rate_id)->get()->row();
+
+        if ( ! $tax_rate) {
+            $validation_errors['room_tax_rate_id'] = trans('tax_rate');
+        }
+
+        $date_from = $this->parse_user_date($this->input->post('room_date_from'));
+        $date_to   = $this->parse_user_date($this->input->post('room_date_to'));
+
+        if ( ! $date_from) {
+            $validation_errors['room_date_from'] = trans('from_date');
+        }
+
+        if ( ! $date_to || ($date_from && $date_to <= $date_from)) {
+            $validation_errors['room_date_to'] = trans('to_date');
+        }
+
+        $adults = $this->input->post('room_adults');
+
+        if ( ! ctype_digit((string) $adults) || (int) $adults < 1) {
+            $validation_errors['room_adults'] = trans('adults_from_15');
+        }
+
+        $city_tax = $this->mdl_products->where('ip_products.product_name', 'Ortstaxe')->get()->row();
+
+        if ( ! $city_tax) {
+            $validation_errors['room_product_id'] = trans('room_invoice_product_missing') . ' Ortstaxe';
+        }
+
+        $cleaning_enabled = (bool) $this->input->post('room_final_cleaning');
+        $cleaning         = null;
+        $cleaning_gross   = 0.0;
+
+        if ($cleaning_enabled) {
+            $cleaning       = $this->mdl_products->where('ip_products.product_name', 'Endreinigung')->get()->row();
+            $cleaning_gross = (float) standardize_amount($this->input->post('room_cleaning_price'));
+
+            if ( ! $cleaning) {
+                $validation_errors['room_final_cleaning'] = trans('room_invoice_product_missing') . ' Endreinigung';
+            }
+
+            if ($cleaning_gross <= 0) {
+                $validation_errors['room_cleaning_price'] = trans('final_cleaning_price_gross');
+            }
+        }
+
+        if ($validation_errors) {
+            $this->json_encode_ajax([
+                'success'           => 0,
+                'validation_errors' => $validation_errors,
+            ]);
+
+            return;
+        }
+
+        // Fixed values: default invoice group, no PDF password
+        $_POST['invoice_group_id'] = get_setting('default_invoice_group');
+        $_POST['invoice_password'] = '';
+        $_POST['payment_method']   = get_setting('invoice_default_payment_method');
+
+        if ( ! $this->mdl_invoices->run_validation()) {
+            $this->load->helper('json_error');
+            $this->json_encode_ajax([
+                'success'           => 0,
+                'validation_errors' => json_errors(),
+            ]);
+
+            return;
+        }
+
+        $invoice_id = $this->mdl_invoices->create();
+
+        $nights      = (int) $date_from->diff($date_to)->days;
+        $same_year   = $date_from->format('Y') === $date_to->format('Y');
+        $description = ($same_year ? $date_from->format('d.m.') : $date_from->format('d.m.Y')) . '-' . $date_to->format('d.m.Y');
+
+        $tax_percent = (float) $tax_rate->tax_rate_percent;
+
+        $items = [
+            [
+                'invoice_id'           => $invoice_id,
+                'item_tax_rate_id'     => $tax_rate_id,
+                'item_product_id'      => $room->product_id,
+                'item_name'            => $room->product_name,
+                'item_description'     => $description,
+                'item_quantity'        => $nights,
+                'item_price'           => round($price_gross / (1 + $tax_percent / 100), 8),
+                'item_price_gross'     => round($price_gross, 8),
+                'item_discount_amount' => 0,
+                'item_order'           => 1,
+                'item_product_unit'    => $this->mdl_units->get_name($room->unit_id, $nights),
+                'item_product_unit_id' => $room->unit_id,
+            ],
+            [
+                'invoice_id'           => $invoice_id,
+                'item_tax_rate_id'     => (int) $city_tax->tax_rate_id,
+                'item_product_id'      => $city_tax->product_id,
+                'item_name'            => $city_tax->product_name,
+                'item_description'     => (string) $city_tax->product_description,
+                'item_quantity'        => $nights * (int) $adults,
+                'item_price'           => (float) $city_tax->product_price,
+                'item_price_gross'     => $city_tax->product_price_gross,
+                'item_discount_amount' => 0,
+                'item_order'           => 2,
+                'item_product_unit'    => $this->mdl_units->get_name($city_tax->unit_id, $nights * (int) $adults),
+                'item_product_unit_id' => $city_tax->unit_id,
+            ],
+        ];
+
+        if ($cleaning_enabled) {
+            $cleaning_tax_percent = (float) $cleaning->tax_rate_percent;
+
+            $items[] = [
+                'invoice_id'           => $invoice_id,
+                'item_tax_rate_id'     => (int) $cleaning->tax_rate_id,
+                'item_product_id'      => $cleaning->product_id,
+                'item_name'            => $cleaning->product_name,
+                'item_description'     => (string) $cleaning->product_description,
+                'item_quantity'        => 1,
+                'item_price'           => round($cleaning_gross / (1 + $cleaning_tax_percent / 100), 8),
+                'item_price_gross'     => round($cleaning_gross, 8),
+                'item_discount_amount' => 0,
+                'item_order'           => 3,
+                'item_product_unit'    => $this->mdl_units->get_name($cleaning->unit_id, 1),
+                'item_product_unit_id' => $cleaning->unit_id,
+            ];
+        }
+
+        $global_discount = [
+            'amount'         => 0.0,
+            'percent'        => 0.0,
+            'item'           => 0.0,
+            'items_subtotal' => 0.0,
+        ];
+
+        foreach ($items as $item) {
+            $this->mdl_items->save(null, $item, $global_discount);
+        }
+
+        $this->json_encode_ajax([
+            'success'    => 1,
+            'invoice_id' => $invoice_id,
+        ]);
+    }
+
+    private function product_gross_price($product): float
+    {
+        if ($product->product_price_gross !== null && $product->product_price_gross !== '') {
+            return (float) $product->product_price_gross;
+        }
+
+        $tax_percent = (float) ($product->tax_rate_percent ?? 0);
+
+        return round((float) $product->product_price * (1 + $tax_percent / 100), 2);
+    }
+
+    private function parse_user_date($date): ?DateTime
+    {
+        if ( ! is_string($date) || $date === '' || ! is_date($date)) {
+            return null;
+        }
+
+        $parsed = DateTime::createFromFormat('Y-m-d', date_to_mysql($date));
+
+        return $parsed ? $parsed->setTime(0, 0) : null;
+    }
+
     public function create_recurring()
     {
         $this->load->model('invoices/mdl_invoices_recurring');

@@ -44,6 +44,7 @@
                         <i class="visible-md-inline fa fa-file-text"></i>
                     </a>
                     <ul class="dropdown-menu">
+                        <li><a href="#" class="create-room-invoice"><?php _trans('create_room_invoice'); ?></a></li>
                         <li><a href="#" class="create-invoice"><?php _trans('create_invoice'); ?></a></li>
                         <li><?php echo anchor('invoices/index', trans('view_invoices')); ?></li>
                         <li><?php echo anchor('invoices/recurring/index', trans('view_recurring_invoices')); ?></li>
